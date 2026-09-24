@@ -1,0 +1,17 @@
+name: Daily G2A Deal Refresher
+on:
+  schedule:
+    - cron: '0 22 * * *' # Executes automatically at 8:00 AM AEST daily
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run Scraper Code
+      run: |
+        python tracker.py
+    - name: Commit Updated Prices & Re-Deploy Website
+      run: |
+        git config --global user.name "DealBot"
+        git commit -am "Automated Daily Price Refresh"
+        git push
