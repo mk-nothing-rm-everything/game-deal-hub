@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live PC Game Deal Tracker (AUD)</title>
+    <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+
+    <!-- Header Section -->
+    <header class="bg-gray-800 border-b border-gray-700 py-6 text-center shadow-lg">
+        <h1 class="text-3xl font-bold tracking-tight text-emerald-400">🎮 Daily Game Deal Hub</h1>
+        <p class="text-gray-400 text-sm mt-1">Live PC game deals directly from API feeds • Updated continuously in AUD</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Live Loading Spinner -->
+        <div id="loading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        </div>
+
+        <!-- Dynamic Content Grid -->
+        <div id="deals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- JavaScript will inject cards here automatically -->
+        </div>
+    </main>
+
+    <script>
+        // Set standard baseline conversion rate (1 USD = 1.47 AUD)
+        const USD_TO_AUD = 1.47;
+
+        async function fetchLiveDeals() {
+            try {
+                // CheapShark endpoint querying the highest rated game discounts on the market
+                const response = await fetch('https://cheapshark.com');
+                const data = await response.json();
+                
+                const grid = document.getElementById('deals-grid');
+                const loading = document.getElementById('loading');
+                
+                grid.innerHTML = ''; // Wipe stale rows
+                
+                data.forEach(deal => {
+                    // Convert native API USD values into localized AUD values
+                    const salePriceAUD = (parseFloat(deal.salePrice) * USD_TO_AUD).toFixed(2);
+                    const retailPriceAUD = (parseFloat(deal.normalPrice) * USD_TO_AUD).toFixed(2);
+                    const savingsPercentage = Math.round(parseFloat(deal.savings));
+
+                    // Build interactive content layout cards
+                    const card = document.createElement('div');
+                    card.className = "bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-emerald-500 transition duration-300 shadow-md flex flex-col justify-between";
+                    card.innerHTML = `
+                        <div>
+                            <img src="${deal.thumb}" alt="${deal.title}" class="w-full h-36 object-cover bg-gray-900 border-b border-gray-700">
+                            <div class="p-5">
+                                <h3 class="text-lg font-bold truncate text-white" title="${deal.title}">${deal.title}</h3>
+                                <div class="flex items-center space-x-2 mt-2">
+                                    <span class="bg-red-900/60 text-red-400 text-xs font-semibold px-2 py-0.5 rounded">-${savingsPercentage}% OFF</span>
+                                    <span class="text-xs text-gray-400">Score: ${deal.metacriticScore || 'N/A'}/100</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0 border-t border-gray-700/50 mt-4 flex items-center justify-between bg-gray-800/40">
+                            <div>
+                                <p class="text-2xl font-black text-emerald-400">$${salePriceAUD} <span class="text-xs font-normal text-gray-400">AUD</span></p>
+                                <p class="text-xs text-gray-500 line-through">$${retailPriceAUD} AUD</p>
+                            </div>
+                            <a href="https://cheapshark.com{deal.dealID}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm">
+                                View Deal
+                            </a>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // Display grid and hide loader
+                loading.classList.add('hidden');
+                grid.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('API Stream Interrupted:', error);
+                document.getElementById('loading').innerHTML = `<p class="text-red-400 font-semibold">Failed to load real-time deals. Please refresh later.</p>`;
+            }
+        }
+
+        // Initialize script on startup
+        fetchLiveDeals();
+    </script>
+</body>
+</html>
